@@ -1,0 +1,4 @@
+selenium==4.15.2
+crewai==0.28.3
+webdriver-manager==4.0.1
+python-dotenv==1.0.0
