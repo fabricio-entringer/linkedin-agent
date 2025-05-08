@@ -13,7 +13,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 HEADLESS = os.getenv("HEADLESS", "false").lower() == "true"
 
 # Define paths
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent  # Go up one more level to reach project root
 LOGS_DIR = BASE_DIR / "logs"
 
 # Create logs directory if it doesn't exist

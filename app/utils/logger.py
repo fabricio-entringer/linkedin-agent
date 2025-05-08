@@ -12,6 +12,10 @@ def setup_logger():
     logger = logging.getLogger("linkedin_automation")
     logger.setLevel(logging.INFO)
     
+    # Clear any existing handlers to avoid duplication
+    if logger.handlers:
+        logger.handlers.clear()
+    
     # Create handlers
     file_handler = logging.FileHandler(log_file)
     console_handler = logging.StreamHandler()
@@ -32,20 +36,14 @@ logger, log_file = setup_logger()
 
 def log_content(content, content_type="generic"):
     """Log content to the log file with appropriate formatting"""
-    from datetime import datetime
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
+    # Log to the standard logger (this will go to both console and log file)
     logger.info(f"--- {content_type.upper()} CONTENT START at {timestamp} ---")
     logger.info(content)
     logger.info(f"--- {content_type.upper()} CONTENT END ---")
-    
-    # Also write directly to the log file for better formatting of large content
-    with open(log_file, 'a') as f:
-        f.write(f"\n\n--- {content_type.upper()} CONTENT START at {timestamp} ---\n")
-        f.write(content)
-        f.write(f"\n--- {content_type.upper()} CONTENT END ---\n\n")
         
-    # For message analysis, also save to a dedicated file
+    # For message analysis, save to a dedicated file for easier reference
     if content_type == "linkedin_message_analysis":
         analysis_file = Path(log_file).parent / "message_analysis" / f"analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
         # Ensure the directory exists
