@@ -64,88 +64,108 @@ class LinkedInTool:
             logger.error(f"Error during login verification: {e}")
             return False
     
-    def go_to_feed(self):
-        """Navigate to the LinkedIn feed/home page"""
+    def go_to_messages(self):
+        """Navigate to the LinkedIn messaging page"""
         if not self.logged_in:
-            logger.error("Not logged in to LinkedIn. Cannot navigate to feed.")
+            logger.error("Not logged in to LinkedIn. Cannot navigate to messages.")
             return False
         
-        logger.info("Navigating to LinkedIn feed...")
-        return self.browser.navigate_to("https://www.linkedin.com/feed/")
+        logger.info("Navigating to LinkedIn messages...")
+        return self.browser.navigate_to("https://www.linkedin.com/messaging/")
     
-    def extract_feed_content(self):
-        """Extract content from the LinkedIn feed"""
+    def extract_messages(self, limit=5):
+        """Extract the latest messages from LinkedIn chats
+        
+        Args:
+            limit (int): Maximum number of messages to extract
+            
+        Returns:
+            str: Formatted message content with contacts and messages
+        """
         if not self.logged_in:
-            logger.error("Not logged in to LinkedIn. Cannot extract feed content.")
+            logger.error("Not logged in to LinkedIn. Cannot extract messages.")
             return False
         
-        logger.info("Extracting content from LinkedIn feed...")
+        logger.info(f"Extracting the latest {limit} messages from LinkedIn chats...")
         
-        # Scroll a few times to load more content
-        for _ in range(3):
-            self.browser.scroll_down(500)
-            self.browser.sleep(1)
+        # Wait for the messaging UI to load
+        self.browser.sleep(3)
         
         # Get the page source and parse with BeautifulSoup
         page_source = self.browser.get_page_source()
         soup = BeautifulSoup(page_source, 'html.parser')
         
-        # Extract posts
         try:
-            feed_content = []
+            messages_content = []
             
-            # Find all feed posts
-            posts = soup.find_all("div", {"class": "feed-shared-update-v2"})
+            # Try to find conversation list - we need to try multiple selectors as LinkedIn's UI might change
+            conversations = soup.find_all("li", {"class": "msg-conversation-card"})
             
-            if not posts:
+            if not conversations:
                 # Try another selector if the first one doesn't work
-                posts = soup.find_all("div", {"data-urn": True})
+                conversations = soup.find_all("div", {"class": "msg-conversation-card__content"})
+                
+            if not conversations:
+                # Try more generic selectors
+                conversations = soup.find_all("div", {"class": "msg-conversation-listitem__link"})
+                    
+                if not conversations:
+                    # As a fallback, look for any elements that might contain messaging content
+                    conversations = soup.find_all("div", {"data-control-name": "overlay.expand_conversation"})
             
-            for post in posts:
-                post_author = "Unknown"
-                post_text = "No content"
+            # Process up to the limit
+            for idx, conversation in enumerate(conversations[:limit]):
+                contact_name = "Unknown Contact"
+                last_message = "No message content"
                 
-                # Try to get post author
-                author_elem = post.find("span", {"class": "feed-shared-actor__name"})
-                if author_elem:
-                    post_author = author_elem.get_text(strip=True)
+                # Extract contact name - try multiple selectors
+                name_elem = conversation.find("h3", {"class": "msg-conversation-card__participant-names"})
+                if not name_elem:
+                    name_elem = conversation.find("span", {"class": "msg-conversation-listitem__participant-names"})
+                if not name_elem:
+                    name_elem = conversation.find("span", {"class": "t-16"})
+                if name_elem:
+                    contact_name = name_elem.get_text(strip=True)
                 
-                # Try to get post text
-                text_elem = post.find("div", {"class": "feed-shared-update-v2__description-wrapper"})
-                if text_elem:
-                    post_text = text_elem.get_text(strip=True)
-                else:
-                    # Try alternative selector
-                    text_elem = post.find("span", {"class": "break-words"})
-                    if text_elem:
-                        post_text = text_elem.get_text(strip=True)
+                # Extract last message - try multiple selectors
+                msg_elem = conversation.find("span", {"class": "msg-conversation-card__message-snippet-body"})
+                if not msg_elem:
+                    msg_elem = conversation.find("div", {"class": "msg-conversation-card__message-snippet"})
+                if not msg_elem:
+                    msg_elem = conversation.find("p", {"class": "mail-messages-list__body"})
+                if not msg_elem:
+                    # Last resort - find any element that might contain message text
+                    msg_elem = conversation.find("div", class_=lambda c: c and "message" in c.lower())
+                if msg_elem:
+                    last_message = msg_elem.get_text(strip=True)
                 
-                feed_content.append({
-                    "author": post_author,
-                    "text": post_text
+                # Add to our results
+                messages_content.append({
+                    "contact": contact_name,
+                    "message": last_message
                 })
             
-            if feed_content:
+            if messages_content:
                 # Format content for logging
                 formatted_content = "\n\n".join([
-                    f"Author: {post['author']}\n"
-                    f"Text: {post['text']}\n"
+                    f"Contact: {msg['contact']}\n"
+                    f"Message: {msg['message']}\n"
                     f"{'=' * 50}"
-                    for post in feed_content
+                    for msg in messages_content
                 ])
                 
                 # Log the extracted content
-                log_content(formatted_content, "linkedin_feed")
-                logger.info(f"Extracted {len(feed_content)} posts from LinkedIn feed")
+                log_content(formatted_content, "linkedin_messages")
+                logger.info(f"Extracted {len(messages_content)} messages from LinkedIn")
                 
-                return formatted_content
+                return messages_content
             else:
-                logger.warning("No posts found in the LinkedIn feed")
-                return "No posts found in the feed."
-            
+                logger.warning("No messages found in LinkedIn chats")
+                return []
+                
         except Exception as e:
-            logger.error(f"Error extracting feed content: {e}")
-            return f"Error extracting feed content: {str(e)}"
+            logger.error(f"Error extracting messages: {e}")
+            return []
     
     def close(self):
         """Close the browser"""

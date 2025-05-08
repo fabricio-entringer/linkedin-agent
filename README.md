@@ -1,11 +1,12 @@
-# LinkedIn Automation Agent
+# LinkedIn Message Assistant
 
-A Python application that automates LinkedIn interactions using CrewAI and Selenium. This tool can log in to LinkedIn, navigate to the feed, and extract content.
+An automated tool that logs into LinkedIn, analyzes your recent messages, and generates intelligent response suggestions. Built with Python, CrewAI, and Selenium, it helps you craft professional and context-appropriate replies while respecting platform security with single login attempts.
 
 ## Features
 
-- Automated LinkedIn login
-- Feed content extraction and logging
+- Automated LinkedIn login and messaging navigation
+- Message extraction and intelligent analysis
+- AI-powered contextual response suggestions
 - Agent-based automation using CrewAI
 - Configurable browser options (headless mode)
 
@@ -51,11 +52,14 @@ python main.py
 ```
 
 The application will:
-1. Start a Chrome browser
-2. Log in to LinkedIn using the credentials in your `.env` file
-3. Navigate to the LinkedIn feed
-4. Extract content from the feed
-5. Save the extracted content to the `logs` directory
+1. Start a browser instance
+2. Log in to LinkedIn using the credentials in your .env file
+3. Navigate to the messaging section
+4. Extract the latest 5 conversations
+5. Generate AI-powered response suggestions for each message
+6. Save the analysis with Contact, Message, and Potential Answer to log files
+
+Analysis logs can be found in the `app/logs/message_analysis` directory.
 
 ## Configuration
 

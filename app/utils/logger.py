@@ -32,12 +32,26 @@ logger, log_file = setup_logger()
 
 def log_content(content, content_type="generic"):
     """Log content to the log file with appropriate formatting"""
-    logger.info(f"--- {content_type.upper()} CONTENT START ---")
+    from datetime import datetime
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    logger.info(f"--- {content_type.upper()} CONTENT START at {timestamp} ---")
     logger.info(content)
     logger.info(f"--- {content_type.upper()} CONTENT END ---")
     
     # Also write directly to the log file for better formatting of large content
     with open(log_file, 'a') as f:
-        f.write(f"\n\n--- {content_type.upper()} CONTENT START ---\n")
+        f.write(f"\n\n--- {content_type.upper()} CONTENT START at {timestamp} ---\n")
         f.write(content)
         f.write(f"\n--- {content_type.upper()} CONTENT END ---\n\n")
+        
+    # For message analysis, also save to a dedicated file
+    if content_type == "linkedin_message_analysis":
+        analysis_file = Path(log_file).parent / "message_analysis" / f"analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+        # Ensure the directory exists
+        analysis_file.parent.mkdir(exist_ok=True)
+        # Save the content
+        with open(analysis_file, 'w') as f:
+            f.write(f"LinkedIn Message Analysis - {timestamp}\n\n")
+            f.write(content)
+            f.write("\n\nEnd of Analysis")
