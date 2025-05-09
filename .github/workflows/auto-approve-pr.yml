@@ -1,0 +1,32 @@
+name: Auto-Approve PR After Successful Checks
+
+on:
+  workflow_run:
+    workflows: ["Validate branch name"] 
+    types:
+      - completed
+
+permissions:
+  pull-requests: write
+
+jobs:
+  approve:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get PR number
+        id: get_pr
+        run: |
+          PR_URL=$(gh pr list --state open --json url,headRefName | jq -r '.[] | select(.headRefName == "${{ github.event.workflow_run.head_branch }}") | .url')
+          echo "PR_URL=$PR_URL" >> $GITHUB_ENV
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Approve PR
+        if: env.PR_URL != ''
+        run: gh pr review $PR_URL --approve
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
