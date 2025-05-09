@@ -14,13 +14,16 @@ from app.agents.linkedin_agent import LinkedInMessageAgent
 
 def main():
     """Main function to run the LinkedIn message analysis"""
-    # Check if OpenAI API key is set
-    if not OPENAI_API_KEY:
-        logger.error("OpenAI API key is not set. Please set the OPENAI_API_KEY environment variable.")
-        sys.exit(1)
     
+    # Check if all variable from .env file are set, for each one of them, log a warning if not, log the error and exit
+    required_env_vars = ["OPENAI_API_KEY", "LINKEDIN_EMAIL", "LINKEDIN_PASSWORD"]
+    for var in required_env_vars:
+        if not os.getenv(var):
+            logger.error(f"Environment variable {var} is not set.")
+            sys.exit(1)
+
     logger.info("Starting LinkedIn message analysis...")
-    
+
     try:
         # Create the LinkedIn message agent
         linkedin_agent = LinkedInMessageAgent()
@@ -39,8 +42,7 @@ def main():
         # Run the crew
         result = crew.kickoff()
         
-        logger.info("LinkedIn message analysis completed successfully.")
-        logger.info(f"Result: {result}")
+        logger.info("\033[92mLinkedIn message analysis completed successfully.\033[0m")
         
         return result
     
