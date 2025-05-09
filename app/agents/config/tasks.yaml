@@ -1,0 +1,7 @@
+message_analysis_task:
+  description: >
+    Access LinkedIn messages, extract the latest conversations, and suggest appropriate responses
+    for each message based on context and professional etiquette.
+  expected_output: >
+    A detailed analysis of recent LinkedIn messages with suggested responses
+  agent: linkedin_analyst
