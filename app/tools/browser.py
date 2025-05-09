@@ -93,6 +93,9 @@ class BrowserTool:
             os.makedirs(drivers_dir, exist_ok=True)
             logger.info(f"Using drivers directory: {drivers_dir}")
             
+            # Import ChromeDriverManager within the function scope to avoid variable access issues
+            from webdriver_manager.chrome import ChromeDriverManager
+            
             # Install ChromeDriver with version if available
             if chrome_version:
                 logger.info(f"Installing ChromeDriver for Chrome version {chrome_version}")

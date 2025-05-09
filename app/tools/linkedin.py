@@ -46,20 +46,42 @@ class LinkedInTool:
         if not self.browser.wait_and_click("button[type='submit']"):
             return False
         
-        # Wait for the login to complete
-        self.browser.sleep(3)
+        # Wait for the login to complete - LinkedIn might take longer due to security checks
+        self.browser.sleep(5)
         
         # Check if login was successful
         try:
-            # Look for elements that would indicate successful login
-            profile_icon = self.browser.wait_for_element(".global-nav__me-photo", timeout=5)
-            if profile_icon:
-                self.logged_in = True
-                logger.info("Successfully logged in to LinkedIn")
-                return True
-            else:
-                logger.error("Failed to log in to LinkedIn")
-                return False
+            # Look for elements that would indicate successful login - try multiple selectors
+            success_selectors = [
+                ".global-nav__me-photo",  # Profile icon
+                ".feed-identity-module__member-photo",  # Another possible profile icon
+                ".feed-container",  # Feed container
+                ".search-global-typeahead__input"  # Search bar
+            ]
+            
+            for selector in success_selectors:
+                logger.info(f"Checking for login success with selector: {selector}")
+                element = self.browser.wait_for_element(selector, timeout=10)
+                if element:
+                    self.logged_in = True
+                    logger.info(f"Successfully logged in to LinkedIn (detected {selector})")
+                    return True
+            
+            # Check for security challenges or verification pages
+            challenge_selectors = [
+                ".challenge-dialog",  # Security verification
+                "#captcha-challenge",  # CAPTCHA
+                ".pin-verification"   # PIN verification
+            ]
+            
+            for selector in challenge_selectors:
+                element = self.browser.find_element(selector)
+                if element:
+                    logger.error(f"LinkedIn is requesting additional verification: {selector}")
+                    return False
+            
+            logger.error("Failed to log in to LinkedIn - could not verify successful login")
+            return False
         except Exception as e:
             logger.error(f"Error during login verification: {e}")
             return False
