@@ -27,6 +27,12 @@ jobs:
           branch_name="${{ steps.vars.outputs.branch_name }}"
           echo "🔍 Checking branch name: $branch_name"
 
+          # Special branches that don't need to follow the convention
+          if [[ "$branch_name" == "master" || "$branch_name" == "develop" ]]; then
+            echo "✅ Branch name is valid (special branch)."
+            exit 0
+          fi
+
           if echo "$branch_name" | grep -Eq '^(feature|bugfix|hotfix|release|chore|refactor)/[a-z0-9._-]+$'; then
             echo "✅ Branch name is valid."
           else
@@ -34,6 +40,8 @@ jobs:
             echo ""
             echo "👉 Branch name must follow the pattern:"
             echo "   <type>/<description>"
+            echo ""
+            echo "Special branches 'master', 'main', and 'develop' are exempt from this pattern."
             echo ""
             echo "Allowed types:"
             echo "  - feature/   → for new features or enhancements"
