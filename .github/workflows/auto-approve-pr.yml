@@ -1,3 +1,4 @@
+# filepath: /home/fabricio/workspace/linkedin-agent/.github/workflows/auto-approve-pr.yml
 name: Auto-Approve PR After Successful Checks
 
 on:
@@ -20,13 +21,13 @@ jobs:
       - name: Get PR number
         id: get_pr
         run: |
-          PR_URL=$(gh pr list --state open --json url,headRefName | jq -r '.[] | select(.headRefName == "${{ github.event.workflow_run.head_branch }}") | .url')
-          echo "PR_URL=$PR_URL" >> $GITHUB_ENV
+          PR_URL=$(gh pr list --state open --json url,headRefName | jq -r --arg branch "${{ github.event.workflow_run.head_branch }}" '.[] | select(.headRefName == $branch) | .url')
+          echo "PR_URL=$PR_URL" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Approve PR
-        if: env.PR_URL != ''
-        run: gh pr review $PR_URL --approve
+        if: steps.get_pr.outputs.PR_URL != ''
+        run: gh pr review ${{ steps.get_pr.outputs.PR_URL }} --approve
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
