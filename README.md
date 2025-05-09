@@ -82,6 +82,53 @@ Edit the `.env` file to configure:
 └── .env               # Environment variables (create from .env.example)
 ```
 
+## Development Workflow
+
+### Branch Naming Convention
+
+This project follows a standardized branch naming convention to maintain a clean and organized repository. When creating a new branch, please follow this pattern:
+
+```
+<type>/<description>
+```
+
+#### Branch Types
+
+- `feature/` - For new features or enhancements
+- `bugfix/` - For fixing non-critical bugs
+- `hotfix/` - For urgent production fixes
+- `release/` - For preparing release branches
+- `chore/` - For maintenance tasks (e.g., updating dependencies, configs)
+- `refactor/` - For code improvements without changing behavior
+- `docs/` - For documentation updates only
+
+#### Description Guidelines
+
+The description part should:
+- Use lowercase letters, numbers, dashes (-), underscores (_), or dots (.)
+- Be concise but descriptive
+- Use dashes (-) instead of spaces
+
+#### Examples
+
+```
+feature/add-login-api
+bugfix/fix-user-profile
+hotfix/security-patch
+release/v1.2.0
+chore/update-dependencies
+refactor/clean-auth-service
+docs/update-installation-guide
+```
+
+#### Protected Branches
+
+⚠️ **IMPORTANT**: Direct pushing to the following branches is not allowed:
+- `master` - Main production branch
+- `develop` - Development integration branch
+
+All changes to these protected branches must go through Pull Requests with proper code review.
+
 ## Safety & Ethics
 
 This tool is for educational purposes only. Be aware that:

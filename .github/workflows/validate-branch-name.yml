@@ -33,7 +33,7 @@ jobs:
             exit 0
           fi
 
-          if echo "$branch_name" | grep -Eq '^(feature|bugfix|hotfix|release|chore|refactor)/[a-z0-9._-]+$'; then
+          if echo "$branch_name" | grep -Eq '^(feature|bugfix|hotfix|release|chore|refactor|docs)/[a-z0-9._-]+$'; then
             echo "✅ Branch name is valid."
           else
             echo "❌ Invalid branch name: '$branch_name'"
@@ -50,6 +50,7 @@ jobs:
             echo "  - release/   → for preparing a release branch"
             echo "  - chore/     → for maintenance tasks (e.g., updating dependencies, configs)"
             echo "  - refactor/  → for code improvements without changing behavior"
+            echo "  - docs/      → for documentation updates only"
             echo ""
             echo "Description must contain lowercase letters, numbers, dashes (-), underscores (_), or dots (.)"
             echo ""
