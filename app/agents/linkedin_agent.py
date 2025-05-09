@@ -1,4 +1,5 @@
 from crewai import Agent, Task
+from crewai.tools import tool
 from app.utils.logger import logger, log_content
 from app.tools.linkedin import LinkedInTool
 
@@ -27,7 +28,6 @@ class LinkedInMessageAgent:
     
     def create_message_task(self):
         """Create a task to analyze LinkedIn messages"""
-        from langchain.tools import tool
         
         @tool
         def analyze_linkedin_messages():
@@ -38,7 +38,6 @@ class LinkedInMessageAgent:
             description="Access LinkedIn messages, extract the latest conversations, and suggest appropriate responses for each message based on context and professional etiquette.",
             agent=self.agent,
             expected_output="A detailed analysis of recent LinkedIn messages with suggested responses",
-            async_execution=False,
             tools=[analyze_linkedin_messages]
         )
     
