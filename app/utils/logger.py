@@ -6,10 +6,11 @@ from app.utils.config import get_log_file_path
 
 def setup_logger():
     """Set up and configure the logger"""
+    
     log_file = get_log_file_path()
     
     # Create a logger
-    logger = logging.getLogger("linkedin_automation")
+    logger = logging.getLogger("entringer-linkedin-agent")
     logger.setLevel(logging.INFO)
     
     # Clear any existing handlers to avoid duplication
@@ -36,6 +37,7 @@ logger, log_file = setup_logger()
 
 def log_content(content, content_type="generic"):
     """Log content to the log file with appropriate formatting"""
+
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     # Log to the standard logger (this will go to both console and log file)
