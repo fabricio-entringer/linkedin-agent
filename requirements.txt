@@ -1,7 +1,13 @@
-selenium==4.15.2
-crewai==0.28.3
-webdriver-manager==4.0.1
-python-dotenv==1.0.0
-langchain==0.1.0
-langchain-openai==0.1.4
-beautifulsoup4==4.12.2
+selenium==4.32.0
+crewai==0.119.0
+webdriver-manager==4.0.2
+python-dotenv==1.1.0
+langchain==0.3.25
+langchain-openai==0.3.16
+beautifulsoup4==4.13.4
+# Additional dependencies
+cryptography>=44.0.3  # Required for auth0-python used by crewai
+langchain-core>=0.3.59  # Required for langchain
+pydantic>=2.11.4  # Latest version for compatibility
+openai>=1.75.0  # Latest version for compatibility
+tenacity>=9.1.2  # For retrying operations
