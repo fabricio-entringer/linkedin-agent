@@ -1,0 +1,57 @@
+name: Validate branch name
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  check-branch-name:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get branch name
+        id: vars
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "branch_name=${GITHUB_HEAD_REF}" >> $GITHUB_OUTPUT
+          else
+            ref="${GITHUB_REF#refs/heads/}"
+            echo "branch_name=${ref}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate branch name
+        run: |
+          branch_name="${{ steps.vars.outputs.branch_name }}"
+          echo "🔍 Checking branch name: $branch_name"
+
+          if echo "$branch_name" | grep -Eq '^(feature|bugfix|hotfix|release|chore|refactor)/[a-z0-9._-]+$'; then
+            echo "✅ Branch name is valid."
+          else
+            echo "❌ Invalid branch name: '$branch_name'"
+            echo ""
+            echo "👉 Branch name must follow the pattern:"
+            echo "   <type>/<description>"
+            echo ""
+            echo "Allowed types:"
+            echo "  - feature/   → for new features or enhancements"
+            echo "  - bugfix/    → for fixing non-critical bugs"
+            echo "  - hotfix/    → for urgent production fixes"
+            echo "  - release/   → for preparing a release branch"
+            echo "  - chore/     → for maintenance tasks (e.g., updating dependencies, configs)"
+            echo "  - refactor/  → for code improvements without changing behavior"
+            echo ""
+            echo "Description must contain lowercase letters, numbers, dashes (-), underscores (_), or dots (.)"
+            echo ""
+            echo "✅ Example valid branch names:"
+            echo "   feature/add-login-api"
+            echo "   bugfix/fix-user-profile"
+            echo "   hotfix/security-patch"
+            echo "   release/v1.2.0"
+            echo "   chore/update-dependencies"
+            echo "   refactor/clean-auth-service"
+            echo ""
+            exit 1
+          fi
