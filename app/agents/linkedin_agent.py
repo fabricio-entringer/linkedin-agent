@@ -3,7 +3,9 @@ from crewai.project import CrewBase, agent, crew, task
 from app.utils.logger import logger, log_content
 from app.tools.linkedin_tools import analyze_linkedin_messages
 from crewai.agents.agent_builder.base_agent import BaseAgent
-from typing import List
+from typing import List, Dict, Any
+import os
+import yaml
 
 @CrewBase
 class LinkedInMessageCrew:
@@ -11,9 +13,23 @@ class LinkedInMessageCrew:
     
     agents: List[BaseAgent]
     tasks: List[Task]
+    agents_config: Dict[str, Any]
+    tasks_config: Dict[str, Any]
     
     def __init__(self):
-        pass
+        # Initialize the configurations
+        self.agents_config = self._load_config("agents.yaml")
+        self.tasks_config = self._load_config("tasks.yaml")
+    
+    def _load_config(self, filename: str) -> Dict[str, Any]:
+        """Load configuration from YAML file"""
+        config_path = os.path.join(os.path.dirname(__file__), "config", filename)
+        try:
+            with open(config_path, "r") as file:
+                return yaml.safe_load(file) or {}
+        except FileNotFoundError:
+            logger.warning(f"Config file not found at {config_path}. Proceeding with empty configurations.")
+            return {}
     
     @agent
     def linkedin_analyst(self) -> Agent:

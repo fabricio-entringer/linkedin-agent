@@ -5,6 +5,7 @@ python-dotenv==1.1.0
 langchain==0.3.25
 langchain-openai==0.3.16
 beautifulsoup4==4.13.4
+PyYAML==6.0.2  # For loading configuration files
 # Additional dependencies
 cryptography>=44.0.3  # Required for auth0-python used by crewai
 langchain-core>=0.3.59  # Required for langchain
