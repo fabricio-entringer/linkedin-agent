@@ -3,14 +3,13 @@
 import os
 import sys
 import time
-from crewai import Crew, Process
 
 # Add the project root directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.utils.logger import logger
 from app.utils.config import OPENAI_API_KEY
-from app.agents.linkedin_agent import LinkedInMessageAgent
+from app.agents.linkedin_agent import LinkedInMessageCrew
 
 def main():
     """Main function to run the LinkedIn message analysis"""
@@ -25,19 +24,8 @@ def main():
     logger.info("Starting LinkedIn message analysis...")
 
     try:
-        # Create the LinkedIn message agent
-        linkedin_agent = LinkedInMessageAgent()
-        
-        # Create the message analysis task
-        message_task = linkedin_agent.create_message_task()
-        
-        # Create a crew with the LinkedIn agent
-        crew = Crew(
-            agents=[linkedin_agent.agent],
-            tasks=[message_task],
-            verbose=True,
-            process=Process.sequential
-        )
+        # Create and run the LinkedIn message crew
+        crew = LinkedInMessageCrew().crew()
         
         # Run the crew
         result = crew.kickoff()
