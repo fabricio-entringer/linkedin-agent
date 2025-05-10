@@ -1,0 +1,10 @@
+# Copilot Instructions
+# Follow the repository's conventions:
+# 
+# 1. Use GitHub MCP Server to manage GitHub topics (issues, PRs)
+# 2. Branch naming: <type>/<description> 
+#    Types: feature, bugfix, hotfix, release, chore, refactor, docs
+# 3. PR format: #<issue-number> - <title>
+# 4. ALWAYS create branch before working on issue
+#
+# For full instructions see: .github/copilot-instructions.md
