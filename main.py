@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# 
+# Note for GitHub Copilot: This project follows specific conventions.
+# See .github/copilot-instructions.md for branch naming and PR formats.
 
 import os
 import sys
