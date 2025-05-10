@@ -11,6 +11,13 @@ This file contains instructions for GitHub Copilot to follow when assisting with
 
 When creating issues, follow these conventions based on the repository's branch naming standards:
 
+### Issue Templates
+
+- **ALWAYS** use the appropriate issue template from the `.github/ISSUE_TEMPLATE` folder
+- Select the template that best matches your issue type
+- Fill out all required fields in the template
+- Do not remove template sections; mark as "N/A" if not applicable
+
 ### Issue Types
 
 Issues should be categorized according to one of these types:
