@@ -399,3 +399,50 @@ class BrowserTool:
         except Exception as e:
             logger.error(f"Failed all alternative browser setup approaches: {e}")
             return False
+    
+    def find_element_by_xpath(self, xpath):
+        """Find an element using an XPath selector"""
+        try:
+            element = self.driver.find_element(By.XPATH, xpath)
+            return element
+        except NoSuchElementException:
+            logger.debug(f"Element not found with XPath: {xpath}")
+            return None
+        except Exception as e:
+            logger.error(f"Error finding element with XPath '{xpath}': {e}")
+            return None
+    
+    def find_elements_by_xpath(self, xpath):
+        """Find all elements using an XPath selector"""
+        try:
+            elements = self.driver.find_elements(By.XPATH, xpath)
+            return elements
+        except Exception as e:
+            logger.error(f"Error finding elements with XPath '{xpath}': {e}")
+            return []
+    
+    def click_element(self, element):
+        """Click on a specific WebElement"""
+        try:
+            element.click()
+            return True
+        except Exception as e:
+            try:
+                # Try JavaScript click as fallback
+                self.driver.execute_script("arguments[0].click();", element)
+                return True
+            except Exception as js_e:
+                logger.error(f"Failed to click element: {e}, JS click failed: {js_e}")
+                return False
+
+    def wait_and_click_xpath(self, xpath, timeout=10):
+        """Wait for an element to be clickable and click it using XPath selector"""
+        try:
+            element = WebDriverWait(self.driver, timeout).until(
+                EC.element_to_be_clickable((By.XPATH, xpath))
+            )
+            element.click()
+            return True
+        except Exception as e:
+            logger.error(f"Failed to click element with XPath '{xpath}': {e}")
+            return False

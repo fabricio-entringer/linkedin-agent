@@ -49,15 +49,20 @@ def analyze_linkedin_messages():
             if not messages:
                 continue
                 
-            # Get the most recent message
-            latest_message = messages[0]  # The first message is the most recent one
+            # Extract the latest message content
+            if not messages or len(messages) == 0:
+                continue
+                
+            latest_message = messages[0]  # The first message object
+            latest_content = latest_message.get('content', '') if isinstance(latest_message, dict) else latest_message
             
             # Generate a potential response using the LLM with context
-            suggestion = generate_response_suggestion_with_context(contact, latest_message, messages)
+            message_contents = [m.get('content', '') if isinstance(m, dict) else m for m in messages]
+            suggestion = generate_response_suggestion_with_context(contact, latest_content, message_contents)
             
             analyzed_messages.append({
                 "contact": contact,
-                "message": latest_message,
+                "message": latest_content,
                 "message_count": message_count,
                 "potential_answer": suggestion
             })
@@ -135,7 +140,21 @@ def generate_response_suggestion_with_context(contact, message, message_history)
             )
         
         # Construct user prompt with context from message history
-        conversation_context = "\n".join([f"Message: {m}" for m in message_history[1:]]) if len(message_history) > 1 else "No previous messages"
+        formatted_messages = []
+        for i, msg in enumerate(message_history):
+            if i == 0:  # Skip the latest message as we'll add it separately
+                continue
+                
+            # Handle both string messages and dict message objects
+            if isinstance(msg, dict):
+                sender = msg.get('sender', 'Unknown')
+                content = msg.get('content', '')
+                timestamp = msg.get('timestamp', '')
+                formatted_messages.append(f"{sender} ({timestamp}): {content}")
+            else:
+                formatted_messages.append(f"Message: {msg}")
+                
+        conversation_context = "\n".join(formatted_messages) if formatted_messages else "No previous messages"
         
         user_prompt = (
             f"Contact: {contact}\n"

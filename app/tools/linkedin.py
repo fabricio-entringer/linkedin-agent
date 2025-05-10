@@ -103,7 +103,7 @@ class LinkedInTool:
             
         Returns:
             list: List of dictionaries with conversation data in format:
-                 {'contact': name, 'messages': [list_of_messages], 'message_count': count}
+                 {'contact': name, 'messages': [{'sender': name, 'content': text, 'timestamp': time}], 'message_count': count}
         """
         if not self.logged_in:
             logger.error("Not logged in to LinkedIn. Cannot extract messages.")
@@ -139,7 +139,6 @@ class LinkedInTool:
             # Process up to the limit
             for idx, conversation in enumerate(conversations[:limit]):
                 contact_name = "Unknown Contact"
-                last_message = "No message content"
                 
                 # Extract contact name - try multiple selectors
                 name_elem = conversation.find("h3", {"class": "msg-conversation-card__participant-names"})
@@ -150,38 +149,158 @@ class LinkedInTool:
                 if name_elem:
                     contact_name = name_elem.get_text(strip=True)
                 
-                # Extract last message - try multiple selectors
-                msg_elem = conversation.find("span", {"class": "msg-conversation-card__message-snippet-body"})
-                if not msg_elem:
-                    msg_elem = conversation.find("div", {"class": "msg-conversation-card__message-snippet"})
-                if not msg_elem:
-                    msg_elem = conversation.find("p", {"class": "mail-messages-list__body"})
-                if not msg_elem:
-                    # Last resort - find any element that might contain message text
-                    msg_elem = conversation.find("div", class_=lambda c: c and "message" in c.lower())
-                if msg_elem:
-                    last_message = msg_elem.get_text(strip=True)
+                logger.info(f"Processing conversation with: {contact_name}")
                 
-                # Add to our results with the new structure
-                messages_content.append({
-                    "contact": contact_name,
-                    "messages": [last_message],  # For now, just include the last message in the list
-                    "message_count": 1
-                })
+                # Find the clickable element to open the conversation
+                conversation_elem = None
+                
+                # Try to find the conversation element in the DOM using Selenium
+                try:
+                    # Different selectors LinkedIn might use
+                    selectors = [
+                        f"//h3[contains(text(), '{contact_name}')]/ancestor::li",
+                        f"//span[contains(text(), '{contact_name}')]/ancestor::div[contains(@class, 'msg-conversation-card')]",
+                        f"//span[contains(text(), '{contact_name}')]/ancestor::div[contains(@class, 'msg-conversation-listitem__link')]"
+                    ]
+                    
+                    for selector in selectors:
+                        try:
+                            conversation_elem = self.browser.find_element_by_xpath(selector)
+                            if conversation_elem:
+                                break
+                        except:
+                            continue
+                            
+                    if not conversation_elem:
+                        logger.warning(f"Could not find clickable element for conversation with {contact_name}")
+                        continue
+                        
+                    # Click on the conversation to open it
+                    logger.info(f"Opening conversation with {contact_name}")
+                    self.browser.click_element(conversation_elem)
+                    
+                    # Wait for the conversation to load
+                    self.browser.sleep(2)
+                    
+                    # Extract all messages in the conversation
+                    conversation_messages = []
+                    
+                    # Get updated page source after clicking
+                    conversation_page = self.browser.get_page_source()
+                    conversation_soup = BeautifulSoup(conversation_page, 'html.parser')
+                    
+                    # Find the message container
+                    message_container = conversation_soup.find("div", {"class": "msg-conversation-list-content"})
+                    if not message_container:
+                        message_container = conversation_soup.find("div", {"class": "msg-s-message-list-container"})
+                    
+                    if message_container:
+                        # Find all message items
+                        message_items = message_container.find_all("li", {"class": "msg-s-message-list__event"})
+                        if not message_items:
+                            # Try alternative selectors
+                            message_items = message_container.find_all("div", {"class": "msg-s-message-group"})
+                            
+                        for message_item in message_items:
+                            sender = "Unknown"
+                            content = "No content"
+                            timestamp = ""
+                            
+                            # Extract sender
+                            sender_elem = message_item.find("span", {"class": "msg-s-message-group__name"})
+                            if not sender_elem:
+                                sender_elem = message_item.find("span", {"class": "profile-card__name"})
+                            if sender_elem:
+                                sender = sender_elem.get_text(strip=True)
+                            else:
+                                # If no sender found, check if it's from the user ("You")
+                                if message_item.find("div", {"class": "msg-s-message-group--from-participant"}):
+                                    sender = contact_name
+                                else:
+                                    sender = "You"
+                                    
+                            # Extract message content
+                            content_elem = message_item.find("p", {"class": "msg-s-event-listitem__body"})
+                            if not content_elem:
+                                content_elem = message_item.find("div", {"class": "msg-s-event__content"})
+                            if not content_elem:
+                                content_elem = message_item.find("p")
+                            if content_elem:
+                                content = content_elem.get_text(strip=True)
+                                
+                            # Extract timestamp if available
+                            timestamp_elem = message_item.find("time")
+                            if timestamp_elem:
+                                timestamp = timestamp_elem.get_text(strip=True)
+                                
+                            # Add message to the conversation
+                            conversation_messages.append({
+                                "sender": sender,
+                                "content": content, 
+                                "timestamp": timestamp
+                            })
+                    
+                    # Add the conversation to our results
+                    message_count = len(conversation_messages)
+                    
+                    if message_count == 0:
+                        # If we couldn't extract structured messages, at least get the last message preview
+                        msg_elem = conversation.find("span", {"class": "msg-conversation-card__message-snippet-body"})
+                        if not msg_elem:
+                            msg_elem = conversation.find("div", {"class": "msg-conversation-card__message-snippet"})
+                        if not msg_elem:
+                            msg_elem = conversation.find("p", {"class": "mail-messages-list__body"})
+                        if msg_elem:
+                            last_message = msg_elem.get_text(strip=True)
+                            conversation_messages.append({
+                                "sender": "Unknown",
+                                "content": last_message,
+                                "timestamp": ""
+                            })
+                            message_count = 1
+                    
+                    messages_content.append({
+                        "contact": contact_name,
+                        "messages": conversation_messages,
+                        "message_count": message_count
+                    })
+                    
+                    # Navigate back to the messages list
+                    # Locate and click on the back button or click on the messages navigation item
+                    back_button = self.browser.find_element_by_xpath("//button[contains(@class, 'msg-overlay-bubble-header__back-button')]")
+                    if back_button:
+                        self.browser.click_element(back_button)
+                        self.browser.sleep(1)
+                    else:
+                        # Alternative: click on messaging icon in the nav
+                        messaging_nav = self.browser.find_element_by_xpath("//a[contains(@href, '/messaging')]")
+                        if messaging_nav:
+                            self.browser.click_element(messaging_nav)
+                            self.browser.sleep(2)
+                            
+                except Exception as e:
+                    logger.error(f"Error processing conversation with {contact_name}: {e}")
+                    # Try to navigate back to messages list
+                    self.browser.navigate_to("https://www.linkedin.com/messaging/")
+                    self.browser.sleep(2)
+                    continue
             
             if messages_content:
                 # Format content for logging
                 formatted_content = "\n\n".join([
-                    f"Contact: {msg['contact']}\n"
-                    f"Message: {msg['messages'][0]}\n"  # Display the first message for logging
-                    f"Message Count: {msg['message_count']}\n"
-                    f"{'=' * 50}"
+                    f"Contact: {msg['contact']}\n" +
+                    f"Message Count: {msg['message_count']}\n" +
+                    "\n".join([
+                        f"- {m['sender']}: {m['content']} ({m['timestamp']})"
+                        for m in msg['messages']
+                    ]) +
+                    f"\n{'=' * 50}"
                     for msg in messages_content
                 ])
                 
                 # Log the extracted content
                 log_content(formatted_content, "linkedin_messages")
-                logger.info(f"Extracted {len(messages_content)} conversations from LinkedIn")
+                logger.info(f"Extracted {len(messages_content)} conversations with a total of {sum(msg['message_count'] for msg in messages_content)} messages")
                 
                 return messages_content
             else:
