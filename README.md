@@ -2,6 +2,19 @@
 
 An automated tool that logs into LinkedIn, analyzes your recent messages, and generates intelligent response suggestions. Built with Python, CrewAI, and Selenium, it helps you craft professional and context-appropriate replies while respecting platform security with single login attempts.
 
+## Documentation
+
+Comprehensive documentation is available in the [docs](/docs) directory:
+
+- [Getting Started](/docs/getting-started.md) - Installation and setup
+- [Configuration](/docs/configuration.md) - Environment variables and settings
+- [Usage Guide](/docs/usage-guide.md) - Day-to-day usage
+- [Conversation Extraction](/docs/conversation-extraction.md) - How messages are extracted
+- [Response Generation](/docs/response-generation.md) - How responses are generated
+- [Troubleshooting](/docs/troubleshooting.md) - Common issues and solutions
+- [API Reference](/docs/api-reference.md) - Classes and methods
+- [Development Guide](/docs/development-guide.md) - Contributing and extending
+
 ## Features
 
 - Automated LinkedIn login and messaging navigation
