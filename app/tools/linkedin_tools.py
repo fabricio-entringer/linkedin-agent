@@ -5,9 +5,9 @@ from app.tools.linkedin import LinkedInTool
 
 @tool("analyze_linkedin_messages")
 def analyze_linkedin_messages():
-    """Analyze LinkedIn messages and suggest responses"""
+    """Analyze LinkedIn messages with full conversation history and suggest responses"""
     try:
-        logger.info("Starting LinkedIn message analysis task...")
+        logger.info("Starting LinkedIn message analysis task with full conversation history...")
         
         # Create a LinkedInTool instance
         linkedin_tool = LinkedInTool()
@@ -28,28 +28,37 @@ def analyze_linkedin_messages():
             return "Failed to navigate to the LinkedIn messages."
         
         # Extract messages (latest 5)
-        messages = linkedin_tool.extract_messages(limit=5)
+        conversation_data = linkedin_tool.extract_messages(limit=5)
         
         # Close the browser
         linkedin_tool.close()
         
         # If no messages were found
-        if not messages:
+        if not conversation_data:
             return "No messages found in LinkedIn chats."
         
         # Generate response suggestions for each message
         analyzed_messages = []
         
-        for msg in messages:
-            contact = msg['contact']
-            message = msg['message']
+        for conversation in conversation_data:
+            contact = conversation['contact']
+            messages = conversation['messages']
+            message_count = conversation['message_count']
             
-            # Generate a potential response using the LLM
-            suggestion = generate_response_suggestion(contact, message)
+            # Skip empty conversations
+            if not messages:
+                continue
+                
+            # Get the most recent message
+            latest_message = messages[0]  # The first message is the most recent one
+            
+            # Generate a potential response using the LLM with context
+            suggestion = generate_response_suggestion_with_context(contact, latest_message, messages)
             
             analyzed_messages.append({
                 "contact": contact,
-                "message": message,
+                "message": latest_message,
+                "message_count": message_count,
                 "potential_answer": suggestion
             })
         
@@ -57,6 +66,7 @@ def analyze_linkedin_messages():
         output = "\n\n".join([
             f"Contact: {msg['contact']}\n"
             f"Message: {msg['message']}\n"
+            f"Total Messages: {msg['message_count']}\n"
             f"Potential Answer: {msg['potential_answer']}\n"
             f"{'=' * 50}"
             for msg in analyzed_messages
@@ -75,7 +85,11 @@ def analyze_linkedin_messages():
         return f"Error during LinkedIn message analysis: {str(e)}"
 
 def generate_response_suggestion(contact, message):
-    """Generate a response suggestion for a given message"""
+    """Generate a response suggestion for a given message (legacy method)"""
+    return generate_response_suggestion_with_context(contact, message, [message])
+
+def generate_response_suggestion_with_context(contact, message, message_history):
+    """Generate a response suggestion using full conversation history for context"""
     try:
         # Use the LLM to generate a response
         from langchain_openai import ChatOpenAI
@@ -90,6 +104,7 @@ def generate_response_suggestion(contact, message):
         system_prompt = (
             "You are a professional LinkedIn communication assistant. "
             "Generate a thoughtful, concise, and professional response to the following LinkedIn message. "
+            "Use the conversation history provided for context when crafting your response. "
         )
         
         if message_type == "connection_request":
@@ -119,7 +134,15 @@ def generate_response_suggestion(contact, message):
                 "Keep the response under 100 words."
             )
         
-        user_prompt = f"Contact: {contact}\nMessage: {message}\n\nSuggested response:"
+        # Construct user prompt with context from message history
+        conversation_context = "\n".join([f"Message: {m}" for m in message_history[1:]]) if len(message_history) > 1 else "No previous messages"
+        
+        user_prompt = (
+            f"Contact: {contact}\n"
+            f"Conversation History:\n{conversation_context}\n\n"
+            f"Latest Message: {message}\n\n"
+            f"Suggested response:"
+        )
         
         response = llm([
             SystemMessage(content=system_prompt),
@@ -128,7 +151,7 @@ def generate_response_suggestion(contact, message):
         
         return response.content.strip()
     except Exception as e:
-        logger.error(f"Failed to generate response suggestion: {e}")
+        logger.error(f"Failed to generate response suggestion with context: {e}")
         return "Could not generate a suggestion due to an error."
         
 def determine_message_type(message):

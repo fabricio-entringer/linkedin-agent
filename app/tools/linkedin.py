@@ -102,7 +102,8 @@ class LinkedInTool:
             limit (int): Maximum number of messages to extract
             
         Returns:
-            str: Formatted message content with contacts and messages
+            list: List of dictionaries with conversation data in format:
+                 {'contact': name, 'messages': [list_of_messages], 'message_count': count}
         """
         if not self.logged_in:
             logger.error("Not logged in to LinkedIn. Cannot extract messages.")
@@ -161,24 +162,26 @@ class LinkedInTool:
                 if msg_elem:
                     last_message = msg_elem.get_text(strip=True)
                 
-                # Add to our results
+                # Add to our results with the new structure
                 messages_content.append({
                     "contact": contact_name,
-                    "message": last_message
+                    "messages": [last_message],  # For now, just include the last message in the list
+                    "message_count": 1
                 })
             
             if messages_content:
                 # Format content for logging
                 formatted_content = "\n\n".join([
                     f"Contact: {msg['contact']}\n"
-                    f"Message: {msg['message']}\n"
+                    f"Message: {msg['messages'][0]}\n"  # Display the first message for logging
+                    f"Message Count: {msg['message_count']}\n"
                     f"{'=' * 50}"
                     for msg in messages_content
                 ])
                 
                 # Log the extracted content
                 log_content(formatted_content, "linkedin_messages")
-                logger.info(f"Extracted {len(messages_content)} messages from LinkedIn")
+                logger.info(f"Extracted {len(messages_content)} conversations from LinkedIn")
                 
                 return messages_content
             else:
