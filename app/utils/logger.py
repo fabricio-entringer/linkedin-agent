@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 from datetime import datetime
 
@@ -11,7 +12,10 @@ def setup_logger():
     
     # Create a logger
     logger = logging.getLogger("entringer-linkedin-agent")
-    logger.setLevel(logging.INFO)
+    
+    # Set log level based on environment variable (default to INFO if not set)
+    debug_mode = os.environ.get("DEBUG", "false").lower() == "true"
+    logger.setLevel(logging.DEBUG if debug_mode else logging.INFO)
     
     # Clear any existing handlers to avoid duplication
     if logger.handlers:

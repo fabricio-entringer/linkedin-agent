@@ -26,12 +26,16 @@ def analyze_linkedin_messages():
         if not linkedin_tool.go_to_messages():
             linkedin_tool.close()
             return "Failed to navigate to the LinkedIn messages."
-        
+
         # Extract messages (latest 5)
-        conversation_data = linkedin_tool.extract_messages(limit=5)
+        conversation_data = linkedin_tool.extract_messages_full(limit=5)
         
         # Close the browser
         linkedin_tool.close()
+
+        return "Finishing.................."
+
+        
         
         # If no messages were found
         if not conversation_data:
@@ -84,75 +88,72 @@ def analyze_linkedin_messages():
             pass
         return f"Error during LinkedIn message analysis: {str(e)}"
 
-def generate_response_suggestion(contact, message):
-    """Generate a response suggestion for a given message (legacy method)"""
-    return generate_response_suggestion_with_context(contact, message, [message])
 
-def generate_response_suggestion_with_context(contact, message, message_history):
-    """Generate a response suggestion using full conversation history for context"""
-    try:
-        # Use the LLM to generate a response
-        from langchain_openai import ChatOpenAI
-        from langchain.schema import HumanMessage, SystemMessage
+# def generate_response_suggestion_with_context(contact, message, message_history):
+#     """Generate a response suggestion using full conversation history for context"""
+#     try:
+#         # Use the LLM to generate a response
+#         from langchain_openai import ChatOpenAI
+#         from langchain.schema import HumanMessage, SystemMessage
         
-        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
+#         llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
         
-        # Determine the message type to customize the response
-        message_type = determine_message_type(message)
+#         # Determine the message type to customize the response
+#         message_type = determine_message_type(message)
         
-        # Construct the prompt based on message type
-        system_prompt = (
-            "You are a professional LinkedIn communication assistant. "
-            "Generate a thoughtful, concise, and professional response to the following LinkedIn message. "
-            "Use the conversation history provided for context when crafting your response. "
-        )
+#         # Construct the prompt based on message type
+#         system_prompt = (
+#             "You are a professional LinkedIn communication assistant. "
+#             "Generate a thoughtful, concise, and professional response to the following LinkedIn message. "
+#             "Use the conversation history provided for context when crafting your response. "
+#         )
         
-        if message_type == "connection_request":
-            system_prompt += (
-                "This appears to be a connection request or introduction. "
-                "Be appreciative and show interest in connecting. "
-                "Keep the response friendly, professional, and under 80 words."
-            )
-        elif message_type == "job_opportunity":
-            system_prompt += (
-                "This appears to be related to a job opportunity. "
-                "Express appropriate interest or gratitude while maintaining professionalism. "
-                "Ask 1-2 relevant follow-up questions if appropriate. "
-                "Keep the response under 100 words."
-            )
-        elif message_type == "sales_pitch":
-            system_prompt += (
-                "This appears to be a sales pitch or service offering. "
-                "Be polite but direct about your level of interest. "
-                "If declining, be respectful. If interested, ask a specific question. "
-                "Keep the response under 80 words."
-            )
-        else:
-            system_prompt += (
-                "Respond in a friendly but professional manner. "
-                "Match the tone and formality of the original message. "
-                "Keep the response under 100 words."
-            )
+#         if message_type == "connection_request":
+#             system_prompt += (
+#                 "This appears to be a connection request or introduction. "
+#                 "Be appreciative and show interest in connecting. "
+#                 "Keep the response friendly, professional, and under 80 words."
+#             )
+#         elif message_type == "job_opportunity":
+#             system_prompt += (
+#                 "This appears to be related to a job opportunity. "
+#                 "Express appropriate interest or gratitude while maintaining professionalism. "
+#                 "Ask 1-2 relevant follow-up questions if appropriate. "
+#                 "Keep the response under 100 words."
+#             )
+#         elif message_type == "sales_pitch":
+#             system_prompt += (
+#                 "This appears to be a sales pitch or service offering. "
+#                 "Be polite but direct about your level of interest. "
+#                 "If declining, be respectful. If interested, ask a specific question. "
+#                 "Keep the response under 80 words."
+#             )
+#         else:
+#             system_prompt += (
+#                 "Respond in a friendly but professional manner. "
+#                 "Match the tone and formality of the original message. "
+#                 "Keep the response under 100 words."
+#             )
         
-        # Construct user prompt with context from message history
-        conversation_context = "\n".join([f"Message: {m}" for m in message_history[1:]]) if len(message_history) > 1 else "No previous messages"
+#         # Construct user prompt with context from message history
+#         conversation_context = "\n".join([f"Message: {m}" for m in message_history[1:]]) if len(message_history) > 1 else "No previous messages"
         
-        user_prompt = (
-            f"Contact: {contact}\n"
-            f"Conversation History:\n{conversation_context}\n\n"
-            f"Latest Message: {message}\n\n"
-            f"Suggested response:"
-        )
+#         user_prompt = (
+#             f"Contact: {contact}\n"
+#             f"Conversation History:\n{conversation_context}\n\n"
+#             f"Latest Message: {message}\n\n"
+#             f"Suggested response:"
+#         )
         
-        response = llm([
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=user_prompt)
-        ])
+#         response = llm([
+#             SystemMessage(content=system_prompt),
+#             HumanMessage(content=user_prompt)
+#         ])
         
-        return response.content.strip()
-    except Exception as e:
-        logger.error(f"Failed to generate response suggestion with context: {e}")
-        return "Could not generate a suggestion due to an error."
+#         return response.content.strip()
+#     except Exception as e:
+#         logger.error(f"Failed to generate response suggestion with context: {e}")
+#         return "Could not generate a suggestion due to an error."
         
 def determine_message_type(message):
     """Determine the type of LinkedIn message to tailor the response"""
